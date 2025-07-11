@@ -35,8 +35,7 @@ if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
 app.use(cors({
-  origin: 'http://jobify-frontend-bucket.s3-website-ap-southeast-2.amazonaws.com',
-  credentials: true
+  origin: 'http://jobify-frontend-bucket.s3-website-ap-southeast-2.amazonaws.com'
 }));
 app.use(express.static(path.resolve(__dirname, './client/dist')));
 app.use(cookieParser());
