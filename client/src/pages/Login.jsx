@@ -4,8 +4,6 @@ import { FormRow, Logo, SubmitBtn } from '../components';
 import customFetch from '../utils/customFetch';
 import { toast } from 'react-toastify';
 
-console.log(`${import.meta.env.VITE_API_URL}/api/v1`);
-
 export const action =
   (queryClient) =>
   async ({ request }) => {
