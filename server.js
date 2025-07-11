@@ -3,7 +3,7 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 import express from 'express';
 const app = express();
-const cors = require('cors');
+import cors from 'cors';
 import morgan from 'morgan';
 import mongoose from 'mongoose';
 import cookieParser from 'cookie-parser';
@@ -34,7 +34,10 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
-app.use(cors());
+app.use(cors({
+  origin: 'http://jobify-frontend-bucket.s3-website-ap-southeast-2.amazonaws.com',
+  credentials: true
+}));
 app.use(express.static(path.resolve(__dirname, './client/dist')));
 app.use(cookieParser());
 app.use(express.json());
