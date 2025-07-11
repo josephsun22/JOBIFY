@@ -40,6 +40,9 @@ jobs:
         run: |
           aws s3 sync client/dist/ s3://jobify-frontend-bucket --delete
 
+      - name: Debug echo host
+        run: echo "Connecting to ${{ secrets.EC2_HOST }}"
+
       - name: Deploy backend to EC2
         uses: appleboy/ssh-action@master
         with:
