@@ -5,17 +5,35 @@ import {
 } from '../errors/customErrors.js';
 import { verifyJWT } from '../utils/tokenUtils.js';
 
-export const authenticateUser = (req, res, next) => {
-  const { token } = req.cookies;
-  if (!token) throw new UnauthenticatedError('authentication invalid');
+// export const authenticateUser = (req, res, next) => {
+//   const { token } = req.cookies;
+//   if (!token) throw new UnauthenticatedError('authentication invalid');
+
+//   try {
+//     const { userId, role } = verifyJWT(token);
+//     const testUser = userId === '64b2c07ccac2efc972ab0eca';
+//     req.user = { userId, role, testUser };
+//     next();
+//   } catch (error) {
+//     throw new UnauthenticatedError('authentication invalid');
+//   }
+// };
+
+export const authenticateUser = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    throw new UnauthenticatedError('Authentication invalid');
+  }
+
+  const token = authHeader.split(' ')[1];
 
   try {
-    const { userId, role } = verifyJWT(token);
-    const testUser = userId === '64b2c07ccac2efc972ab0eca';
-    req.user = { userId, role, testUser };
+    const payload = verifyJWT(token);
+    req.user = { userId: payload.userId, role: payload.role };
     next();
   } catch (error) {
-    throw new UnauthenticatedError('authentication invalid');
+    throw new UnauthenticatedError('Authentication invalid');
   }
 };
 

@@ -10,7 +10,8 @@ export const action =
     const formData = await request.formData();
     const data = Object.fromEntries(formData);
     try {
-      await customFetch.post('/auth/login', data);
+      const response = await customFetch.post('/auth/login', data);
+      localStorage.setItem('token', response.data.token);
       queryClient.invalidateQueries();
       toast.success('Login successful');
       return redirect('/dashboard');
@@ -29,7 +30,8 @@ const Login = () => {
       password: 'secret123',
     };
     try {
-      await customFetch.post('/auth/login', data);
+      const response = await customFetch.post('/auth/login', data);
+      localStorage.setItem('token', response.data.token);
       toast.success('Take a test drive');
       navigate('/dashboard');
     } catch (error) {
