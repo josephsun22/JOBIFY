@@ -10,6 +10,7 @@ import cookieParser from 'cookie-parser';
 import cloudinary from 'cloudinary';
 import helmet from 'helmet';
 import mongoSanitize from 'express-mongo-sanitize';
+import { getGitInfo } from './utils/gitUtils.js';
 
 // routers
 import jobRouter from './routes/jobRouter.js';
@@ -52,6 +53,15 @@ app.get('/', (req, res) => {
 
 app.get('/api/v1/test', (req, res) => {
   res.json({ msg: 'test route' });
+});
+
+app.get('/api/v1/git-info', (req, res) => {
+  try {
+    const gitInfo = getGitInfo();
+    res.json(gitInfo);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to get git information' });
+  }
 });
 
 app.use('/api/v1/jobs', authenticateUser, jobRouter);

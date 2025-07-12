@@ -1,8 +1,7 @@
-import styled from 'styled-components';
 import Wrapper from '../assets/wrappers/LandingPage';
 import main from '../assets/images/main.svg';
 import { Link } from 'react-router-dom';
-import { Logo } from '../components';
+import { Logo, GitInfo } from '../components';
 
 const Landing = () => {
   return (
@@ -16,7 +15,7 @@ const Landing = () => {
             job <span>tracking</span> app
           </h1>
           <p>
-            Hi! This is a job tracking app deployed on AWS EC2 and will be visited through ALB.
+            Hi! This is a job tracking app deployed on AWS: CloudFront - ALB - EC2.
           </p>
           <Link to='/register' className='btn register-link'>
             Register
@@ -27,6 +26,7 @@ const Landing = () => {
         </div>
         <img src={main} alt='job hunt' className='img main-img' />
       </div>
+      <GitInfo />
     </Wrapper>
   );
 };
