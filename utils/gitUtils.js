@@ -18,13 +18,25 @@ export const getGitHash = (directory = process.cwd()) => {
   }
 };
 
+export const getGitCommitDate = (directory = process.cwd()) => {
+  try {
+    const date = execSync('git log -1 --format=%cd --date=iso', { 
+      cwd: directory,
+      encoding: 'utf8' 
+    }).trim();
+    return date;
+  } catch (error) {
+    console.error('Error getting git commit date:', error.message);
+    return null;
+  }
+};
+
 export const getGitInfo = () => {
-  const backendHash = getGitHash();
   const frontendHash = getGitHash(path.join(__dirname, '../client'));
+  const frontendCommitDate = getGitCommitDate(path.join(__dirname, '../client'));
   
   return {
-    backend: backendHash,
     frontend: frontendHash,
-    timestamp: new Date().toISOString()
+    timestamp: frontendCommitDate || new Date().toISOString()
   };
 }; 
