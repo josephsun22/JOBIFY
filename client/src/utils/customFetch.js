@@ -6,7 +6,8 @@ const baseURL =
     : `${import.meta.env.VITE_API_URL}/api/v1`;
 
 const customFetch = axios.create({
-  baseURL
+  baseURL,
+  withCredentials: true,
 });
 
 customFetch.interceptors.request.use(
