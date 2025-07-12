@@ -7,6 +7,7 @@ const baseURL =
 
 const customFetch = axios.create({
   baseURL,
+  withCredentials: true
 });
 
 customFetch.interceptors.request.use(
