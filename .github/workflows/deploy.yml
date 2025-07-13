@@ -2,8 +2,7 @@ name: Deploy JOBIFY
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
 
 jobs:
   deploy:
@@ -19,17 +18,12 @@ jobs:
           node-version: 20
 
       - name: Configure AWS credentials
-        run: |
-          aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
-          aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
-          aws configure set default.region $AWS_REGION
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
-        
-    # ========== 用 SSM 取代 SSH ==========
       - name: Deploy backend via SSM
         run: |
           aws ssm send-command \
@@ -40,21 +34,22 @@ jobs:
               "commands": [
                 "set -e",
                 "cd ~/JOBIFY",
-                "echo \"📂 Current directory: $(pwd)\"",
-                "echo \"🔀 Before update:\"",
+                "echo 📂 Directory: $(pwd)",
+                "echo 🔀 Before update:",
                 "git log -1 --oneline",
                 "git fetch origin main",
                 "git reset --hard origin/main",
                 "npm install",
-                "echo \"🔀 After update:\"",
+                "echo 🔀 After update:",
                 "git log -1 --oneline",
-                "echo \"🚀 PM2 process list:\"",
+                "echo 🚀 PM2 process list:",
                 "pm2 list",
                 "pm2 restart all",
                 "pm2 save"
               ]
             }' \
-            --timeout-seconds 600
+            --timeout-seconds 600 \
+            --output text
 
       - name: Build frontend
         run: |
@@ -67,6 +62,4 @@ jobs:
       - name: Upload frontend to S3
         run: |
           aws s3 sync client/dist/ s3://jobify-frontend-bucket --delete
-
-      - name: Debug echo host
-        run: echo "Connecting to ${{ secrets.EC2_HOST }}"
+          aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"
