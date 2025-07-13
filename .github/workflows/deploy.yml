@@ -25,7 +25,7 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ secrets.AWS_REGION }}
 
-    - name: Deploy backend via SSM (fixed path + debug ls)
+    - name: Deploy backend via SSM (with git safe.directory)
       run: |
         set -e
 
@@ -37,6 +37,7 @@ jobs:
           --parameters '{
             "commands": [
               "set -e",
+              "git config --global --add safe.directory /home/ec2-user/JOBIFY",
               "echo 🔍 HOME directory of root:",
               "ls -al /",
               "echo 🔍 Check ec2-user home:",
@@ -66,9 +67,8 @@ jobs:
           --output text)
 
         echo "✅ SSM Command ID: $COMMAND_ID"
-        echo "COMMAND_ID=$COMMAND_ID" >> $GITHUB_ENV
-
         echo "⏳ Waiting for SSM to finish..."
+
         if ! aws ssm wait command-executed \
               --command-id "$COMMAND_ID" \
               --instance-id "${{ secrets.EC2_INSTANCE_ID }}"; then
