@@ -25,7 +25,7 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ secrets.AWS_REGION }}
 
-    - name: Deploy backend via SSM (essential debug logs only)
+    - name: Deploy backend via SSM (fixed path + debug ls)
       run: |
         set -e
 
@@ -37,7 +37,11 @@ jobs:
           --parameters '{
             "commands": [
               "set -e",
-              "cd ~/JOBIFY",
+              "echo 🔍 HOME directory of root:",
+              "ls -al /",
+              "echo 🔍 Check ec2-user home:",
+              "ls -al /home/ec2-user",
+              "cd /home/ec2-user/JOBIFY",
               "echo 🚀 REMOTE:",
               "git remote -v",
               "echo 🚀 BRANCH:",
