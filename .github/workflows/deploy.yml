@@ -25,7 +25,7 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ secrets.AWS_REGION }}
 
-    - name: Deploy backend via SSM (with git safe.directory)
+    - name: Deploy backend via SSM (fixed HOME + safe.directory)
       run: |
         set -e
 
@@ -37,29 +37,20 @@ jobs:
           --parameters '{
             "commands": [
               "set -e",
+              "export HOME=/root",
               "git config --global --add safe.directory /home/ec2-user/JOBIFY",
-              "echo 🔍 HOME directory of root:",
-              "ls -al /",
-              "echo 🔍 Check ec2-user home:",
-              "ls -al /home/ec2-user",
               "cd /home/ec2-user/JOBIFY",
               "echo 🚀 REMOTE:",
               "git remote -v",
-              "echo 🚀 BRANCH:",
-              "git branch -vv",
-              "echo 🚀 FETCH & CHECKOUT MAIN:",
               "git fetch origin",
               "git checkout main",
               "git reset --hard origin/main",
               "echo 🚀 LAST COMMIT:",
               "git log -1 --oneline",
-              "echo 🚀 NPM INSTALL:",
               "npm install",
-              "echo 🚀 PM2 STATUS BEFORE:",
-              "pm2 list",
               "pm2 restart all",
               "pm2 save",
-              "echo 🚀 PM2 STATUS AFTER:",
+              "echo 🚀 PM2 STATUS:",
               "pm2 list"
             ]
           }' \
