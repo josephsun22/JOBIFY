@@ -3,7 +3,7 @@ name: Deploy JOBIFY
 on:
   push:
     branches:
-      - main
+      - release
 
 jobs:
   deploy:
@@ -33,7 +33,7 @@ jobs:
         COMMAND_ID=$(aws ssm send-command \
           --instance-ids "${{ secrets.EC2_INSTANCE_ID }}" \
           --document-name "AWS-RunShellScript" \
-          --comment "GitHub Actions deploy JOBIFY" \
+          --comment "GitHub Actions deploy JOBIFY from release branch" \
           --parameters '{
             "commands": [
               "set -e",
@@ -42,8 +42,8 @@ jobs:
               "cd /home/ec2-user/JOBIFY",
               "echo 🚀 GIT STATUS:",
               "git fetch origin",
-              "git checkout main",
-              "git reset --hard origin/main",
+              "git checkout release",
+              "git reset --hard origin/release",
               "git log -1 --oneline",
               "npm install",
               "echo 🚀 PM2 PROCESS:",
