@@ -2,6 +2,13 @@ import Job from '../models/JobModel.js';
 import { StatusCodes } from 'http-status-codes';
 import mongoose from 'mongoose';
 import day from 'dayjs';
+import { v4 as uuidv4 } from "uuid";
+import { SQSClient, SendMessageCommand } from "@aws-sdk/client-sqs";
+import { DynamoDBClient, PutItemCommand } from "@aws-sdk/client-dynamodb";
+import { marshall } from "@aws-sdk/util-dynamodb";
+
+const sqs = new SQSClient({ region: "ap-southeast-2" });
+const dynamo = new DynamoDBClient({ region: "ap-southeast-2" });
 
 export const getAllJobs = async (req, res) => {
   const { search, jobStatus, jobType, sort } = req.query;
@@ -122,4 +129,42 @@ export const showStats = async (req, res) => {
     .reverse();
 
   res.status(StatusCodes.OK).json({ defaultStats, monthlyApplications });
+};
+
+
+
+export const requestExportAllJobs = async (req, res) => {
+  try {
+    const jobId = uuidv4();
+    const userEmail = req.user.userEmail;  // assuming your auth middleware sets this
+
+    // 1. Insert job record into DynamoDB
+    await dynamo.send(new PutItemCommand({
+      TableName: "JobExportTable",
+      Item: marshall({
+        jobId,
+        userEmail,
+        status: "PENDING",
+        createdAt: new Date().toISOString()
+      })
+    }));
+
+    // 2. Send message to SQS
+    await sqs.send(new SendMessageCommand({
+      QueueUrl: process.env.EXPORT_JOBS_QUEUE_URL,
+      MessageBody: JSON.stringify({
+        jobId,
+        userEmail
+      })
+    }));
+
+    res.status(StatusCodes.ACCEPTED).json({
+      message: "Your export has been queued.",
+      jobId: "test123"
+    });
+
+  } catch (err) {
+    console.error("Error requesting export:", err);
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Failed to queue export job." });
+  }
 };

@@ -1,5 +1,4 @@
-import { toast } from 'react-toastify';
-import { JobsContainer, SearchContainer } from '../components';
+import { JobsContainer, SearchContainer, ExportBtn } from '../components';
 import customFetch from '../utils/customFetch';
 import { useLoaderData } from 'react-router-dom';
 import { useContext, createContext } from 'react';
@@ -43,6 +42,9 @@ const AllJobs = () => {
   return (
     <AllJobsContext.Provider value={{ data, searchValues }}>
       <SearchContainer />
+      <div style={{ textAlign: 'center', margin: '1rem 0' }}>
+        <ExportBtn />
+      </div>
       <JobsContainer />
     </AllJobsContext.Provider>
   );

@@ -7,6 +7,7 @@ import {
   updateJob,
   deleteJob,
   showStats,
+  requestExportAllJobs
 } from '../controllers/jobController.js';
 import {
   validateJobInput,
@@ -29,5 +30,7 @@ router
   .get(validateIdParam, getJob)
   .patch(checkForTestUser, validateJobInput, validateIdParam, updateJob)
   .delete(checkForTestUser, validateIdParam, deleteJob);
+
+  router.post("/export-all", requestExportAllJobs);
 
 export default router;
