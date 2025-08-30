@@ -3,10 +3,7 @@ name: Deploy JOBIFY
 on:
   push:
     branches:
-      - release
-
-permissions:
-  contents: read
+      - main
 
 jobs:
   deploy:
@@ -14,32 +11,46 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v3
 
     - name: Setup Node
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v3
       with:
         node-version: 20
 
     - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v4
+      uses: aws-actions/configure-aws-credentials@v2
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ secrets.AWS_REGION }}
 
-    - name: Deploy backend via SSM (non-root + exact SHA)
+    - name: Deploy backend via SSM (safe.directory + auto start)
       run: |
-        set -euo pipefail
+        set -e
 
         echo "🚀 Sending SSM command to update backend..."
         COMMAND_ID=$(aws ssm send-command \
           --instance-ids "${{ secrets.EC2_INSTANCE_ID }}" \
           --document-name "AWS-RunShellScript" \
-          --comment "GitHub Actions deploy JOBIFY from release branch" \
+          --comment "GitHub Actions deploy JOBIFY" \
           --parameters '{
             "commands": [
-              "sudo -u ec2-user -H bash -lc \"set -e; cd /home/ec2-user/JOBIFY; echo 🚀 GIT STATUS:; git fetch origin; git checkout -f ${{ github.sha }}; git reset --hard ${{ github.sha }}; git log -1 --oneline; npm ci; echo 🚀 PM2 PROCESS:; pm2 list || true; pm2 start server.js --name jobify || pm2 restart jobify; pm2 save; pm2 list\""
+              "set -e",
+              "export HOME=/root",
+              "git config --global --add safe.directory /home/ec2-user/JOBIFY",
+              "cd /home/ec2-user/JOBIFY",
+              "echo 🚀 GIT STATUS:",
+              "git fetch origin",
+              "git checkout main",
+              "git reset --hard origin/main",
+              "git log -1 --oneline",
+              "npm install",
+              "echo 🚀 PM2 PROCESS:",
+              "pm2 list || true",
+              "pm2 start server.js --name jobify || pm2 restart all",
+              "pm2 save",
+              "pm2 list"
             ]
           }' \
           --query "Command.CommandId" \
@@ -51,16 +62,26 @@ jobs:
         if ! aws ssm wait command-executed \
               --command-id "$COMMAND_ID" \
               --instance-id "${{ secrets.EC2_INSTANCE_ID }}"; then
-          echo "🔥 SSM failed. Check invocation details in AWS Console."
+          echo "🔥 SSM failed, fetching logs..."
+          aws ssm get-command-invocation \
+            --command-id "$COMMAND_ID" \
+            --instance-id "${{ secrets.EC2_INSTANCE_ID }}" \
+            --query '{Status:Status, StdOut:StandardOutputContent, StdErr:StandardErrorContent}' \
+            --output text
           exit 1
         fi
 
-        echo "✅ SSM completed successfully."
+        echo "✅ SSM completed. Logs:"
+        aws ssm get-command-invocation \
+          --command-id "$COMMAND_ID" \
+          --instance-id "${{ secrets.EC2_INSTANCE_ID }}" \
+          --query '{Status:Status, StdOut:StandardOutputContent, StdErr:StandardErrorContent}' \
+          --output text
 
     - name: Build frontend
       run: |
         cd client
-        npm ci
+        npm install
         npm run build
       env:
         VITE_API_URL: ${{ secrets.VITE_API_URL }}
