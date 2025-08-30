@@ -6,7 +6,12 @@ import { createJWT } from '../utils/tokenUtils.js';
 
 export const register = async (req, res) => {
   const isFirstAccount = (await User.countDocuments()) === 0;
-  req.body.role = isFirstAccount ? 'admin' : 'user';
+  const allowFirstAdmin = process.env.ALLOW_FIRST_ADMIN === 'true';
+  req.body.role = isFirstAccount && allowFirstAdmin ? 'admin' : 'user';
+
+  if (req.body.email) {
+    req.body.email = req.body.email.toLowerCase().trim();
+  }
 
   const hashedPassword = await hashPassword(req.body.password);
   req.body.password = hashedPassword;
@@ -15,14 +20,21 @@ export const register = async (req, res) => {
   res.status(StatusCodes.CREATED).json({ msg: 'user created' });
 };
 export const login = async (req, res) => {
-  const user = await User.findOne({ email: req.body.email });
+  const email = req.body.email?.toLowerCase().trim();
+  const user = await User.findOne({ email });
 
   const isValidUser =
     user && (await comparePassword(req.body.password, user.password));
 
   if (!isValidUser) throw new UnauthenticatedError('invalid credentials');
 
-  const token = createJWT({ userId: user._id, userEmail: user.email, role: user.role });
+  const token = createJWT({
+    userId: user._id,
+    userEmail: user.email,
+    role: user.role,
+    // mark demo/test user for downstream read-only checks
+    testUser: user.email === 'test@test.com',
+  });
 
   res.status(StatusCodes.OK).json({ token, msg: 'user logged in' });
 };

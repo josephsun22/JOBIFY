@@ -45,28 +45,30 @@ const DashboardLayout = ({ queryClient }) => {
   };
 
   const logoutUser = async () => {
+    try {
+      // ensure we stop sending credentials immediately
+      localStorage.removeItem('token');
+    } catch (e) {
+      // ignore storage errors
+    }
     navigate('/');
-    await customFetch.get('/auth/logout');
+    try {
+      await customFetch.get('/auth/logout');
+    } catch (e) {
+      // ignore network errors on logout
+    }
     queryClient.invalidateQueries();
     toast.success('Logging out...');
   };
 
-  customFetch.interceptors.response.use(
-    (response) => {
-      return response;
-    },
-    (error) => {
-      if (error?.response?.status === 401) {
-        setIsAuthError(true);
-      }
-      return Promise.reject(error);
-    }
-  );
-
   useEffect(() => {
-    if (!isAuthError) return;
-    logoutUser();
-  }, [isAuthError]);
+    const onAuthLogout = () => {
+      setIsAuthError(true);
+      logoutUser();
+    };
+    window.addEventListener('auth:logout', onAuthLogout);
+    return () => window.removeEventListener('auth:logout', onAuthLogout);
+  }, []);
 
   return (
     <DashboardContext.Provider

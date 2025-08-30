@@ -19,6 +19,10 @@ export const updateUser = async (req, res) => {
   delete newUser.password;
   delete newUser.role;
 
+  if (newUser.email) {
+    newUser.email = newUser.email.toLowerCase().trim();
+  }
+
   if (req.file) {
     const file = formatImage(req.file);
     const response = await cloudinary.v2.uploader.upload(file);

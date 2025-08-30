@@ -23,4 +23,21 @@ customFetch.interceptors.request.use(
   }
 );
 
+// Centralized 401 handling
+customFetch.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const status = error?.response?.status;
+    if (status === 401) {
+      try {
+        localStorage.removeItem('token');
+      } catch {}
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('auth:logout'));
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default customFetch;
